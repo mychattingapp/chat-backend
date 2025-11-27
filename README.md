@@ -1,2 +1,2 @@
 # chat-backend
-frontend repo for mychattingapp
+backend repo for mychattingapp
