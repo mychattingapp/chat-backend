@@ -1,20 +1,28 @@
-const express = require('express')
-const cors = require('cors');
-const dotenv = require('dotenv');
-
-import type { Request, Response } from "express";
-//import errorHandler from './middleware/errorHandler';
-//import routes from './routes';
-
-const logger = require('../middleware/logger');
+import express, { type Request, type Response } from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
+import { requireEnv } from './env.js';
+import passport from 'passport';
 
 dotenv.config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+import { registerPassportStrategies } from './passport.js';
+import { authRouter } from '../routes/authRouter.js';
+//import errorHandler from './middleware/errorHandler';
+//import routes from './routes';
 
-// app.use('/', routes);
+import { logger } from '../middleware/logger.js';
+
+export const app = express();
+app.use(cors({ origin: requireEnv('CLIENT_URL'), credentials: true }));
+app.use(express.json());
+app.use(cookieParser());
+
+registerPassportStrategies();
+app.use(passport.initialize());
+
+app.use('/auth', authRouter);
 
 app.use(logger);
 
@@ -24,4 +32,4 @@ app.use('/health', (req: Request, res: Response) => {
 
 // app.use(errorHandler);
 
-module.exports = app;
+

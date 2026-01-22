@@ -1,5 +1,5 @@
 const PORT = process.env.PORT || 3000;
-const app = require("./config/server");
+import { app } from "./config/server.js";
 
 (async () => {
   try {
@@ -12,4 +12,3 @@ const app = require("./config/server");
     process.exit(1);
   }
 })();
-

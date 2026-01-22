@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 
-const logger = (req: Request, res: Response, next: NextFunction) => {
+export function logger(req: Request, res: Response, next: NextFunction) {
     const time = new Date();
 
     const formattedTime = new Intl.DateTimeFormat("en-GB", {
@@ -21,6 +21,4 @@ const logger = (req: Request, res: Response, next: NextFunction) => {
 
     console.log(`[${formattedDate} ${formattedTime}] [${req.method}] '${req.originalUrl}'`);
     next();
-};
-
-module.exports = logger;
+}
