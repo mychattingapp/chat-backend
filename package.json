@@ -1,11 +1,14 @@
 {
   "name": "chat-backend",
   "version": "1.0.0",
-  "description": "frontend repo for mychattingapp",
-  "main": "src/index.js",
+  "description": "backend repo for mychattingapp",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "type": "module",
   "keywords": [],
