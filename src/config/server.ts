@@ -15,6 +15,7 @@ import { authRouter } from '../routes/authRouter.js';
 import { logger } from '../middleware/logger.js';
 
 export const app = express();
+app.set('trust proxy', 1);
 app.use(cors({ origin: requireEnv('CLIENT_URL'), credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
