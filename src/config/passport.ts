@@ -8,7 +8,7 @@ export function registerPassportStrategies() {
     passport.use(new GoogleStrategy({
         clientID: requireEnv('GOOGLE_CLIENT_ID'),
         clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
-        callbackURL: '/auth/google/callback'
+        callbackURL: requireEnv('GOOGLE_CALLBACK_URL')
     },
         async (_accessToken: any, _refreshToken: any, profile: any, done: any) => {
             try {
