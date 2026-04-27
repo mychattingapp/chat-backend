@@ -24,10 +24,12 @@ FROM base AS deps
 # Leverage a cache mount to /root/.npm to speed up subsequent builds.
 # Leverage bind mounts to package.json and package-lock.json to avoid having to copy them
 # into this layer.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-/root/npm,target=/root/.npm \
-    npm ci --omit=dev
+# RUN --mount=type=bind,source=package.json,target=package.json \
+#     --mount=type=bind,source=package-lock.json,target=package-lock.json \
+#     --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-/root/npm,target=/root/.npm \
+#     npm ci --omit=dev
+COPY package*.json .
+RUN npm ci --omit=dev
 
 ################################################################################
 # Create a stage for building the application.
@@ -36,10 +38,12 @@ ENV DATABASE_URL=postgresql://postgres:postgres@database:5432/mychattingapp
 
 # Download additional development dependencies before building, as some projects require
 # "devDependencies" to be installed to build. If you don't need this, remove this step.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-/root/npm,target=/root/.npm \
-    npm ci
+# RUN --mount=type=bind,source=package.json,target=package.json \
+#     --mount=type=bind,source=package-lock.json,target=package-lock.json \
+#     --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-/root/npm,target=/root/.npm \
+#     npm ci
+COPY package*.json .
+RUN npm ci
 
 # Copy the rest of the source files into the image.
 COPY . .
@@ -56,7 +60,7 @@ FROM node:20.19-slim AS final
 WORKDIR /usr/src/app
 
 # Use production node environment by default.
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Run the application as a non-root user.
 USER node
@@ -74,4 +78,4 @@ COPY --from=build /usr/src/app/dist ./dist
 EXPOSE 3000
 
 # Run the application.
-CMD npm start
+CMD ["npm", "start"]
