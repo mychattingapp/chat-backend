@@ -26,7 +26,7 @@ FROM base AS deps
 # into this layer.
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-/root/.npm,target=/root/.npm \
+    --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-root-npm,target=/root/.npm \
     npm ci --omit=dev
 
 ################################################################################
@@ -38,7 +38,7 @@ ENV DATABASE_URL=postgresql://postgres:postgres@database:5432/mychattingapp
 # "devDependencies" to be installed to build. If you don't need this, remove this step.
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-/root/.npm,target=/root/.npm \
+    --mount=type=cache,id=s/5e6e3308-75cc-4279-a61e-398bf3fe3161-root-npm,target=/root/.npm \
     npm ci
 
 # Copy the rest of the source files into the image.
