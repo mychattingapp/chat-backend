@@ -8,34 +8,47 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./prisma-erd.svg"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String
-  email 	String	 @unique
+  id       String @id @default(uuid())
+  username String
+  email    String @unique
+  auths    Auth[]
+
   createdAt DateTime @default(now())
 
-  auths     Auth[]
-  sentMessages     Message[] @relation("sent")
-  receivedMessages Message[] @relation("received")
+  sentMessages Message[] @relation("sent")
+
+  sentFriendRequests     FriendRequest[] @relation("requester")
+  receivedFriendRequests FriendRequest[] @relation("recipient")
+
+  friendshipsAsUser1 Friendship[] @relation("friend1User")
+  friendshipsAsUser2 Friendship[] @relation("friend2User")
+
+  chatParticipants ChatParticipant[]
 }
 
 model Auth {
-  id           String   @id @default(uuid())
-  provider     AuthProvider
-  providerId   String
-  email        String 	
+  id         String       @id @default(uuid())
+  provider   AuthProvider
+  providerId String
+  email      String
 
   refreshToken String?
   tokenExpiry  DateTime?
 
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([provider, providerId])
 }
@@ -45,15 +58,91 @@ enum AuthProvider {
 }
 
 model Message {
-  id         String   @id @default(uuid())
-  text       String
+  id       String @id @default(uuid())
+  text     String
+  chatId   String
+  senderId String
 
-  senderId   String
-  receiverId String
+  createdAt DateTime @default(now())
 
-  sender     User @relation("sent", fields: [senderId], references: [id])
-  receiver   User @relation("received", fields: [receiverId], references: [id])
+  chat        Chat  @relation("messages", fields: [chatId], references: [id])
+  sender      User  @relation("sent", fields: [senderId], references: [id])
+  lastMessage Chat? @relation("lastMessage")
 
-  createdAt  DateTime @default(now())
+  @@index([chatId, createdAt])
 }
 
+enum ChatType {
+  DIRECT
+  GROUP
+}
+
+model Chat {
+  id            String            @id @default(uuid())
+  name          String? //only for groups
+  messages      Message[]         @relation("messages")
+  participants  ChatParticipant[]
+  chatType      ChatType          @default(DIRECT)
+  lastMessage   Message?          @relation("lastMessage", fields: [lastMessageId], references: [id])
+  lastMessageId String?           @unique
+  directKey     String?           @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChatParticipant {
+  id         String    @id @default(uuid())
+  userId     String
+  lastReadAt DateTime?
+  joinedAt   DateTime  @default(now())
+  leftAt     DateTime?
+  chatId     String
+  isAdmin    Boolean   @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+  chat Chat @relation(fields: [chatId], references: [id])
+
+  @@unique([chatId, userId])
+  @@index([userId])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model FriendRequest {
+  id     String           @id @default(uuid())
+  status FriendshipStatus @default(PENDING)
+
+  requesterId String
+  recipientId String
+
+  requester User @relation("requester", fields: [requesterId], references: [id])
+  recipient User @relation("recipient", fields: [recipientId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, recipientId])
+  @@index([requesterId, status])
+  @@index([recipientId, status])
+}
+
+model Friendship {
+  id String @id @default(uuid())
+
+  friend1 String
+  friend2 String
+
+  friend1Relation User @relation("friend1User", fields: [friend1], references: [id])
+  friend2Relation User @relation("friend2User", fields: [friend2], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([friend1, friend2])
+  @@index([friend1])
+  @@index([friend2])
+}

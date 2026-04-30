@@ -1,6 +1,10 @@
 # chat-backend
 
-Backend for **mychattingapp** — a real-time chat application.
+Backend for **mychattingapp** - a real-time chat application.
+
+## Related Repos
+
+- Frontend: https://github.com/mychattingapp/chat-frontend
 
 ## Tech Stack
 
@@ -13,11 +17,25 @@ Backend for **mychattingapp** — a real-time chat application.
 
 - OAuth login starts with `GET /auth/google` and completes at `GET /auth/google/callback`.
 - On successful callback, the backend issues:
-	- `access_token` (short-lived)
-	- `refresh_token` (longer-lived)
+  - `access_token` (short-lived)
+  - `refresh_token` (longer-lived)
 - Tokens are set as **HttpOnly cookies**.
 - Token refresh happens via `GET /auth/refresh`.
 - Logout clears cookies and invalidates the refresh token server-side.
+
+## Current Status
+
+- Google OAuth login flow is implemented.
+- JWT access/refresh token auth with HttpOnly cookies is implemented.
+- PostgreSQL + Prisma integration is in place.
+- Dockerized backend and local Compose-based database setup are in place.
+- CI build validation is configured.
+
+## Next Up
+
+- Friend request flow
+- 1:1 chat creation
+- Real-time messaging
 
 ## Getting Started
 
@@ -83,28 +101,25 @@ Health check:
 
 ## API Routes (Auth)
 
-- `GET /auth/google` — start Google OAuth flow
-- `GET /auth/google/callback` — OAuth callback (sets cookies, redirects to `CLIENT_URL`)
-- `GET /auth/failure` — OAuth failure handler (redirects to frontend `/login?error=oauth_failed`)
-- `GET /auth/me` — get current user (requires valid access token)
-- `GET /auth/refresh` — refresh tokens using refresh cookie
-- `POST /auth/logout` — clear cookies + revoke refresh token
+- `GET /auth/google` - start Google OAuth flow
+- `GET /auth/google/callback` - OAuth callback (sets cookies, redirects to `CLIENT_URL`)
+- `GET /auth/failure` - OAuth failure handler (redirects to frontend `/login?error=oauth_failed`)
+- `GET /auth/me` - get current user (requires valid access token)
+- `GET /auth/refresh` - refresh tokens using refresh cookie
+- `POST /auth/logout` - clear cookies + revoke refresh token
 
 ## Project Structure
 
-- `src/config` — server, passport, prisma, cookies, env utilities
-- `src/controllers` — request handlers (auth, etc.)
-- `src/routes` — Express routers (e.g. `authRouter`) that wire endpoints → controllers
-- `src/services` — business logic and DB calls (Prisma)
-- `src/middleware` — auth, logging, helpers
-- `prisma/` — schema + migrations
+- `src/config` - server, passport, prisma, cookies, env utilities
+- `src/controllers` - request handlers (auth, etc.)
+- `src/routes` - Express routers (e.g. `authRouter`) that wire endpoints to controllers
+- `src/services` - business logic and DB calls (Prisma)
+- `src/middleware` - auth, logging, helpers
+- `prisma/` - schema + migrations
 
 ## Roadmap / Future Work
 
-- Real-time messaging via **WebSockets** (or Socket.IO) for live chat updates
 - Presence/typing indicators, read receipts, message delivery status
-- Dockerized local dev (`docker compose`) and production containerization
-- CI/CD pipeline (lint, typecheck, tests, build, deploy)
 - More providers (GitHub OAuth) and account linking
 - Rate limiting, CSRF hardening for cookie-based auth, audit logging
 - Redis for session-related caching / pub-sub (horizontal scaling)
