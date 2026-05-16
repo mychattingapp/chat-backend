@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "prisma generate --generator client",
     "prisma:erd": "prisma generate --generator erd",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
