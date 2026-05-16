@@ -47,10 +47,14 @@ export async function fetchUserData(req: AuthenticatedRequest, res: Response) {
     const userId = req.user.id;
     const userObject = await findUser(userId);
 
+    if (!userObject) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
     const userData = {
-        id: userObject?.id,
-        name: userObject?.username,
-        email: userObject?.email,
+        id: userObject.id,
+        name: userObject.username,
+        email: userObject.email,
     };
 
     return res.status(200).json({ user: userData });

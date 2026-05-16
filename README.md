@@ -15,12 +15,12 @@ Backend for **mychattingapp** - a real-time chat application.
 
 ## Auth Overview
 
-- OAuth login starts with `GET /auth/google` and completes at `GET /auth/google/callback`.
+- OAuth login starts with `GET /api/auth/google` and completes at `GET /api/auth/google/callback`.
 - On successful callback, the backend issues:
   - `access_token` (short-lived)
   - `refresh_token` (longer-lived)
 - Tokens are set as **HttpOnly cookies**.
-- Token refresh happens via `GET /auth/refresh`.
+- Token refresh happens via `GET /api/auth/refresh`.
 - Logout clears cookies and invalidates the refresh token server-side.
 
 ## Current Status
@@ -66,7 +66,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DB_NAME
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
 
 # JWT secrets
 JWT_ACCESS_TOKEN_SECRET=change_me
@@ -101,12 +101,12 @@ Health check:
 
 ## API Routes (Auth)
 
-- `GET /auth/google` - start Google OAuth flow
-- `GET /auth/google/callback` - OAuth callback (sets cookies, redirects to `CLIENT_URL`)
-- `GET /auth/failure` - OAuth failure handler (redirects to frontend `/login?error=oauth_failed`)
-- `GET /auth/me` - get current user (requires valid access token)
-- `GET /auth/refresh` - refresh tokens using refresh cookie
-- `POST /auth/logout` - clear cookies + revoke refresh token
+- `GET /api/auth/google` - start Google OAuth flow
+- `GET /api/auth/google/callback` - OAuth callback (sets cookies, redirects to `CLIENT_URL`)
+- `GET /api/auth/failure` - OAuth failure handler (redirects to frontend `/login?error=oauth_failed`)
+- `GET /api/auth/me` - get current user (requires valid access token)
+- `GET /api/auth/refresh` - refresh tokens using refresh cookie
+- `POST /api/auth/logout` - clear cookies + revoke refresh token
 
 ## Project Structure
 

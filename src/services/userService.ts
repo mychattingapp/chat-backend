@@ -9,3 +9,23 @@ export async function findUser(id: string): Promise<User | null> {
     });
     return user;
 }
+
+export async function getUserByAnyEmail(emailId: string): Promise<User | null> {
+    const user = await prisma.user.findFirst({
+        where: {
+            OR: [
+                {
+                    email: emailId
+                },
+                {
+                    auths: {
+                        some: {
+                            email: emailId
+                        }
+                    }
+                }
+            ]
+        }
+    });
+    return user;
+}

@@ -3,6 +3,7 @@ import passport from 'passport';
 import { authCallback, fetchUserData, refreshAccessToken, logoutUser, redirectToClient } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import { authed } from '../middleware/authed.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const authRouter = Router();
 
@@ -11,14 +12,14 @@ authRouter.get('/google',
 );
 
 authRouter.get('/google/callback',
-    passport.authenticate('google', { session: false, failureRedirect: '/auth/failure' }),
-    authCallback
+    passport.authenticate('google', { session: false, failureRedirect: '/api/auth/failure' }),
+    asyncHandler(authCallback)
 );
 
 authRouter.get('/me', authenticateToken, authed(fetchUserData));
 
-authRouter.post('/logout', logoutUser);
+authRouter.post('/logout', asyncHandler(logoutUser));
 
-authRouter.get('/refresh', refreshAccessToken);
+authRouter.get('/refresh', asyncHandler(refreshAccessToken));
 
-authRouter.get('/failure', redirectToClient);
+authRouter.get('/failure', asyncHandler(redirectToClient));

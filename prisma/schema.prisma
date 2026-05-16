@@ -114,11 +114,11 @@ enum FriendshipStatus {
 }
 
 model FriendRequest {
-  id     String           @id @default(uuid())
-  status FriendshipStatus @default(PENDING)
-
+  id          String           @id @default(uuid())
+  status      FriendshipStatus @default(PENDING)
   requesterId String
   recipientId String
+  pairKey     String           @unique
 
   requester User @relation("requester", fields: [requesterId], references: [id])
   recipient User @relation("recipient", fields: [recipientId], references: [id])
