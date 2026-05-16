@@ -9,10 +9,9 @@ dotenv.config();
 
 import { registerPassportStrategies } from './passport.js';
 import { authRouter } from '../routes/authRouter.js';
-//import errorHandler from './middleware/errorHandler';
-//import routes from './routes';
-
+import { friendRouter } from '../routes/friendRouter.js';
 import { logger } from '../middleware/logger.js';
+import { errorHandler } from '../utils/errorHandler.js';
 
 export const app = express();
 app.set('trust proxy', 1);
@@ -23,14 +22,15 @@ app.use(cookieParser());
 registerPassportStrategies();
 app.use(passport.initialize());
 
-app.use('/auth', authRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/friends', friendRouter);
 
 app.use(logger);
 
-app.use('/health', (req: Request, res: Response) => {
+app.use('/health', (_req: Request, res: Response) => {
     return res.send('Chat Backend is running');
 });
 
-// app.use(errorHandler);
+app.use(errorHandler);
 
 

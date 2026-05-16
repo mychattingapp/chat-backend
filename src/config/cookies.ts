@@ -15,7 +15,7 @@ const refreshCookieOptions: CookieOptions = {
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     maxAge: Number(requireEnv('REFRESH_TOKEN_TTL')),
-    path: '/auth'
+    path: '/api/auth'
 };
 
 export { accessCookieOptions, refreshCookieOptions };
