@@ -7,7 +7,13 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     const token = req.cookies['access_token'];
 
     if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: "NO_TOKEN_PROVIDED",
+                message: "No token provided"
+            }
+        });
     }
 
     const secret = requireEnv('JWT_ACCESS_TOKEN_SECRET');
@@ -15,7 +21,13 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     try {
         const tokenPayload = jwt.verify(token, secret);
         if (typeof tokenPayload !== 'object' || tokenPayload === null || !('id' in tokenPayload)) {
-            return res.status(401).json({ message: 'Invalid token' });
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: "INVALID_TOKEN",
+                    message: "Invalid token"
+                }
+            });
         }
 
         const { id } = tokenPayload as { id: string };
@@ -24,7 +36,13 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
         next();
     }
     catch (err) {
-        return res.status(401).json({ message: 'Invalid token' });
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: "INVALID_TOKEN",
+                message: "Invalid token"
+            }
+        });
     }
 
 }

@@ -1,4 +1,4 @@
-import type { FriendRequest, FriendshipStatus } from '@prisma/client';
+import { FriendshipStatus, type FriendRequest } from '@prisma/client';
 import { Prisma } from '@prisma/client'
 import { prisma } from '../config/prismaClient.js';
 import { getUserByAnyEmail } from './userService.js';
@@ -65,14 +65,14 @@ export async function assertCanSendFriendRequest(requesterId: string, recipientI
     let friendRequest = await getFriendRequest(requesterId, recipientId);
 
     if (friendRequest) {
-        if (friendRequest.status === "ACCEPTED") {
+        if (friendRequest.status === FriendshipStatus.ACCEPTED) {
             throw new AppError(
                 "You are already friends with this user.",
                 "ALREADY_FRIENDS",
                 409
             )
         }
-        else if (friendRequest.status === "REJECTED") {
+        else if (friendRequest.status === FriendshipStatus.REJECTED) {
             if (friendRequest.requesterId === requesterId)
                 throw new AppError(
                     "Your previous friend request was rejected.",
@@ -84,7 +84,7 @@ export async function assertCanSendFriendRequest(requesterId: string, recipientI
                 "FRIEND_REQUEST_PREVIOUSLY_REJECTED_BY_YOU",
                 409)
         }
-        else if (friendRequest.status === "PENDING") {
+        else if (friendRequest.status === FriendshipStatus.PENDING) {
             if (friendRequest.requesterId === requesterId)
                 throw new AppError(
                     "You have already sent a friend request to this user.",
@@ -116,14 +116,14 @@ export function assertCanAcceptFriendRequest(userId: string, friendRequest: Frie
         );
     }
 
-    if (friendRequest.status === "ACCEPTED") {
+    if (friendRequest.status === FriendshipStatus.ACCEPTED) {
         throw new AppError(
             "You are already friends with this user.",
             "ALREADY_FRIENDS",
             409
         )
     }
-    else if (friendRequest.status === "REJECTED") {
+    else if (friendRequest.status === FriendshipStatus.REJECTED) {
         throw new AppError(
             "You have already rejected a friend request from this user.",
             "FRIEND_REQUEST_PREVIOUSLY_REJECTED_BY_YOU",
@@ -148,14 +148,14 @@ export function assertCanRejectFriendRequest(userId: string, friendRequest: Frie
         );
     }
 
-    if (friendRequest.status === "ACCEPTED") {
+    if (friendRequest.status === FriendshipStatus.ACCEPTED) {
         throw new AppError(
             "You are already friends with this user.",
             "ALREADY_FRIENDS",
             409
         )
     }
-    else if (friendRequest.status === "REJECTED") {
+    else if (friendRequest.status === FriendshipStatus.REJECTED) {
         throw new AppError(
             "You have already rejected a friend request from this user.",
             "FRIEND_REQUEST_PREVIOUSLY_REJECTED_BY_YOU",
@@ -204,10 +204,10 @@ export async function acceptFriendRequest(userId: string, friendRequestId: strin
             where: {
                 id: friendRequestId,
                 recipientId: userId,
-                status: "PENDING",
+                status: FriendshipStatus.PENDING,
             },
             data: {
-                status: "ACCEPTED"
+                status: FriendshipStatus.ACCEPTED
             },
             include: {
                 requester: true
@@ -257,10 +257,10 @@ export async function rejectFriendRequest(userId: string, friendRequestId: strin
         where: {
             id: friendRequestId,
             recipientId: userId,
-            status: "PENDING"
+            status: FriendshipStatus.PENDING
         },
         data: {
-            status: "REJECTED"
+            status: FriendshipStatus.REJECTED
         },
         include: {
             requester: true
@@ -332,4 +332,19 @@ export async function getAllFriends(userId: string) {
             createdAt: 'desc'
         }
     });
+}
+
+export async function validateUsersAreFriends(user1Id: string, user2Id: string) {
+    const {friend1, friend2} = getFriendshipPair(user1Id, user2Id);
+
+    const friendship = await prisma.friendship.findUnique({
+        where: {
+            friend1_friend2: {
+                friend1: friend1,
+                friend2: friend2
+            }
+        }
+    });
+
+    return !!friendship;
 }

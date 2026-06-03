@@ -7,7 +7,13 @@ export function authed(
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.user) {
-        res.status(401).json({ message: 'Not authenticated' });
+        res.status(401).json({
+          success: false,
+          error: {
+            code: "NOT_AUTHENTICATED",
+            message: "Not authenticated"
+          }
+        });
         return;
       }
 

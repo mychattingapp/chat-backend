@@ -69,7 +69,7 @@ model Message {
   sender      User  @relation("sent", fields: [senderId], references: [id])
   lastMessage Chat? @relation("lastMessage")
 
-  @@index([chatId, createdAt])
+  @@index([chatId, createdAt, id])
 }
 
 enum ChatType {
