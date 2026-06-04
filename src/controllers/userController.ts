@@ -15,5 +15,10 @@ export async function getUser(req: AuthenticatedRequest, res: Response) {
         name: userObject.username,
         email: userObject.email,
     };
-    return res.status(200).json({ user: userData });
+    return res.status(200).json({
+        success: true,
+        data: {
+            user: userData
+        }
+    });
 }

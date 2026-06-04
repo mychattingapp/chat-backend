@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../types/express.js";
-import { acceptFriendRequest, getReceivedFriendRequests, getSentFriendRequests, rejectFriendRequest, sendFriendRequest, getAllFriends } from "../services/friendService.js";
 import { AppError } from "../errors/AppError.js";
+import { acceptFriendRequest, getReceivedFriendRequests, getSentFriendRequests, rejectFriendRequest, sendFriendRequest, getAllFriends } from "../services/friendService.js";
 import { FriendshipStatus } from "@prisma/client";
 
 function validateEmail(email: string): boolean {
@@ -41,14 +41,16 @@ export async function handleSendFriendRequest(req: AuthenticatedRequest, res: Re
 
     return res.status(201).json({
         success: true,
-        friendRequest: {
-            id: createdFriendRequest.id,
-            status: createdFriendRequest.status,
-            createdAt: createdFriendRequest.createdAt,
-            recipient: {
-                id: createdFriendRequest.recipient.id,
-                username: createdFriendRequest.recipient.username,
-                email: createdFriendRequest.recipient.email
+        data: {
+            friendRequest: {
+                id: createdFriendRequest.id,
+                status: createdFriendRequest.status,
+                createdAt: createdFriendRequest.createdAt,
+                recipient: {
+                    id: createdFriendRequest.recipient.id,
+                    username: createdFriendRequest.recipient.username,
+                    email: createdFriendRequest.recipient.email
+                }
             }
         }
     })
@@ -70,14 +72,16 @@ export async function handleAcceptFriendRequest(req: AuthenticatedRequest, res: 
 
     return res.status(200).json({
         success: true,
-        friendRequest: {
-            id: updatedFriendRequest.id,
-            status: updatedFriendRequest.status,
-            updatedAt: updatedFriendRequest.updatedAt,
-            requester: {
-                id: updatedFriendRequest.requester.id,
-                username: updatedFriendRequest.requester.username,
-                email: updatedFriendRequest.requester.email
+        data: {
+            friendRequest: {
+                id: updatedFriendRequest.id,
+                status: updatedFriendRequest.status,
+                updatedAt: updatedFriendRequest.updatedAt,
+                requester: {
+                    id: updatedFriendRequest.requester.id,
+                    username: updatedFriendRequest.requester.username,
+                    email: updatedFriendRequest.requester.email
+                }
             }
         }
     })
@@ -99,14 +103,16 @@ export async function handleRejectFriendRequest(req: AuthenticatedRequest, res: 
 
     return res.status(200).json({
         success: true,
-        friendRequest: {
-            id: updatedFriendRequest.id,
-            status: updatedFriendRequest.status,
-            updatedAt: updatedFriendRequest.updatedAt,
-            requester: {
-                id: updatedFriendRequest.requester.id,
-                username: updatedFriendRequest.requester.username,
-                email: updatedFriendRequest.requester.email
+        data: {
+            friendRequest: {
+                id: updatedFriendRequest.id,
+                status: updatedFriendRequest.status,
+                updatedAt: updatedFriendRequest.updatedAt,
+                requester: {
+                    id: updatedFriendRequest.requester.id,
+                    username: updatedFriendRequest.requester.username,
+                    email: updatedFriendRequest.requester.email
+                }
             }
         }
     })
@@ -120,16 +126,18 @@ export async function handleGetSentFriendRequests(req: AuthenticatedRequest, res
 
     res.status(200).json({
         success: true,
-        FriendRequests: sentFriendRequests.map(friendRequest => ({
-            id: friendRequest.id,
-            status: friendRequest.status,
-            createdAt: friendRequest.createdAt,
-            recipient: {
-                id: friendRequest.recipient.id,
-                username: friendRequest.recipient.username,
-                email: friendRequest.recipient.email
-            }
-        }))
+        data: {
+            friendRequests: sentFriendRequests.map(friendRequest => ({
+                id: friendRequest.id,
+                status: friendRequest.status,
+                createdAt: friendRequest.createdAt,
+                recipient: {
+                    id: friendRequest.recipient.id,
+                    username: friendRequest.recipient.username,
+                    email: friendRequest.recipient.email
+                }
+            }))
+        }
     });
 }
 
@@ -141,39 +149,43 @@ export async function handleGetReceivedFriendRequests(req: AuthenticatedRequest,
 
     res.status(200).json({
         success: true,
-        FriendRequests: receivedFriendRequests.map(friendRequest => ({
-            id: friendRequest.id,
-            status: friendRequest.status,
-            createdAt: friendRequest.createdAt,
-            requester: {
-                id: friendRequest.requester.id,
-                username: friendRequest.requester.username,
-                email: friendRequest.requester.email
-            }
-        }))
+        data: {
+            friendRequests: receivedFriendRequests.map(friendRequest => ({
+                id: friendRequest.id,
+                status: friendRequest.status,
+                createdAt: friendRequest.createdAt,
+                requester: {
+                    id: friendRequest.requester.id,
+                    username: friendRequest.requester.username,
+                    email: friendRequest.requester.email
+                }
+            }))
+        }
     });
 }
 
 export async function handleGetAllFriends(req: AuthenticatedRequest, res: Response) {
     const userId = req.user.id;
 
-    const allFriends = await getAllFriends(userId);
+    const allFriendships = await getAllFriends(userId);
 
     res.status(200).json({
         success: true,
-        Friends: allFriends.map(friend => (
-            friend.friend1Relation.id === userId ?
-                {
-                    friendshipId: friend.id,
-                    id: friend.friend2Relation.id,
-                    username: friend.friend2Relation.username,
-                    email: friend.friend2Relation.email
-                } : {
-                    friendshipId: friend.id,
-                    id: friend.friend1Relation.id,
-                    username: friend.friend1Relation.username,
-                    email: friend.friend1Relation.email
-                }
-        ))
+        data: {
+            friends: allFriendships.map(friendship => (
+                friendship.friend1Relation.id === userId ?
+                    {
+                        friendshipId: friendship.id,
+                        id: friendship.friend2Relation.id,
+                        username: friendship.friend2Relation.username,
+                        email: friendship.friend2Relation.email
+                    } : {
+                        friendshipId: friendship.id,
+                        id: friendship.friend1Relation.id,
+                        username: friendship.friend1Relation.username,
+                        email: friendship.friend1Relation.email
+                    }
+            ))
+        }
     });
 }

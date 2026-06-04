@@ -10,7 +10,13 @@ export async function authCallback(req: Request, res: Response) {
 
     const user = req.user;
     if (!user) {
-        return res.status(401).json({ message: 'Authentication failed' });
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: "AUTHENTICATION_FAILED",
+                message: "Authentication failed"
+            }
+        });
     }
 
     const { id } = user;
@@ -28,18 +34,35 @@ export async function refreshAccessToken(req: Request, res: Response) {
 
     const refreshToken = req.cookies['refresh_token'];
     if (!refreshToken) {
-        return res.status(401).json({ message: 'No refresh token provided' });
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: "NO_REFRESH_TOKEN",
+                message: "No refresh token provided"
+            }
+        });
     }
 
     try {
         const { newAccessToken, newRefreshToken } = await refreshSession(refreshToken);
         setAuthCookies(res, newAccessToken, newRefreshToken);
-        return res.status(200).json({ message: 'Tokens refreshed successfully' });
+        return res.status(200).json({
+            success: true,
+            data: {
+                message: "Tokens refreshed successfully"
+            }
+        });
     }
     catch (error) {
         res.clearCookie('access_token', accessCookieOptions);
         res.clearCookie('refresh_token', refreshCookieOptions);
-        return res.status(401).json({ message: error instanceof Error ? error.message : 'Token refresh failed' });
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: "TOKEN_REFRESH_FAILED",
+                message: error instanceof Error ? error.message : "Token refresh failed"
+            }
+        });
     }
 }
 
@@ -48,7 +71,13 @@ export async function fetchUserData(req: AuthenticatedRequest, res: Response) {
     const userObject = await findUser(userId);
 
     if (!userObject) {
-        return res.status(404).json({ message: 'User not found' });
+        return res.status(404).json({
+            success: false,
+            error: {
+                code: "USER_NOT_FOUND",
+                message: "User not found"
+            }
+        });
     }
 
     const userData = {
@@ -57,7 +86,12 @@ export async function fetchUserData(req: AuthenticatedRequest, res: Response) {
         email: userObject.email,
     };
 
-    return res.status(200).json({ user: userData });
+    return res.status(200).json({
+        success: true,
+        data: {
+            user: userData
+        }
+    });
 }
 
 export async function logoutUser(req: Request, res: Response) {
@@ -75,13 +109,24 @@ export async function logoutUser(req: Request, res: Response) {
         await clearRefreshTokenByValue(refreshToken);
     }
 
-    return res.status(200).json({ message: 'Logged out successfully' });
+    return res.status(200).json({
+        success: true,
+        data: {
+            message: "Logged out successfully"
+        }
+    });
 }
 
 export async function redirectToClient(req: Request, res: Response) {
     const preferred = req.accepts(['html', 'json']);
     if (preferred === 'json') {
-        return res.status(401).json({ message: 'Authentication failed' });
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: "AUTHENTICATION_FAILED",
+                message: "Authentication failed"
+            }
+        });
     }
 
     const clientUrl = requireEnv('CLIENT_URL');
