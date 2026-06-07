@@ -15,6 +15,7 @@ import { errorHandler } from '../utils/errorHandler.js';
 import { chatRouter } from '../routes/chatRouter.js';
 
 export const app = express();
+
 app.set('trust proxy', 1);
 app.use(cors({ origin: requireEnv('CLIENT_URL'), credentials: true }));
 app.use(express.json());
@@ -34,5 +35,3 @@ app.use('/health', (_req: Request, res: Response) => {
 });
 
 app.use(errorHandler);
-
-
