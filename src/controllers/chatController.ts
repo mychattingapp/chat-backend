@@ -4,31 +4,9 @@ import { AppError } from "../errors/AppError.js";
 import { validateUsersAreFriends } from "../services/friendService.js";
 import { assertUserIsChatParticipant, createDirectChat, getAllChats, getChatMessages, getSingleChat, sendMessage } from "../services/chatService.js";
 import { ChatType } from "@prisma/client";
-import type { ChatWithDetails } from "../types/chat.js";
-
-type ChatParticipantDto = {
-    id: string;
-    username: string;
-    email: string;
-};
-
-type LastMessageDto = {
-    id: string;
-    text: string;
-    createdAt: Date;
-    senderId: string;
-};
-
-type ChatDto = {
-    id: string;
-    chatType: ChatType;
-    title: string;
-    name: string | null;
-    participants: ChatParticipantDto[];
-    createdAt: Date;
-    updatedAt: Date;
-    lastMessage: LastMessageDto | null;
-};
+import { parseChatDto } from "../dtos/chatDto.js";
+import { emitNewChat } from "../socket/handlers/chatHandler.js";
+import { emitNewMessage } from "../socket/handlers/messageHandler.js";
 
 function parseMessageCursor(query: AuthenticatedRequest["query"]): {
     cursorId: string | undefined;
@@ -90,52 +68,6 @@ function parseMessageCursor(query: AuthenticatedRequest["query"]): {
     };
 }
 
-function parseChatDto(chat: ChatWithDetails, userId: string): ChatDto {
-    const participants = chat.participants
-        .map(participant => ({
-            id: participant.user.id,
-            username: participant.user.username,
-            email: participant.user.email
-        }))
-        .filter(participant => chat.chatType === ChatType.GROUP
-            || participant.id !== userId);
-
-    let title: string;
-
-    if (chat.chatType === ChatType.DIRECT) {
-        const friendParticipant = participants[0];
-
-        if (!friendParticipant) {
-            throw new AppError(
-                "Direct chat participant not found.",
-                "DIRECT_CHAT_PARTICIPANT_NOT_FOUND",
-                500
-            );
-        }
-
-        title = friendParticipant.username;
-    }
-    else {
-        title = chat.name ?? "Group Chat";
-    }
-
-    return {
-        id: chat.id,
-        chatType: chat.chatType,
-        title,
-        name: chat.name,
-        participants,
-        createdAt: chat.createdAt,
-        updatedAt: chat.updatedAt,
-        lastMessage: chat.lastMessage ? {
-            id: chat.lastMessage.id,
-            text: chat.lastMessage.text,
-            createdAt: chat.lastMessage.createdAt,
-            senderId: chat.lastMessage.senderId
-        } : null
-    };
-}
-
 export async function handleCreateDirectChat(req: AuthenticatedRequest, res: Response) {
     const userId = req.user.id
     const friendId = req.body.friendId
@@ -148,8 +80,12 @@ export async function handleCreateDirectChat(req: AuthenticatedRequest, res: Res
         throw new AppError("Users are not friends.", "USERS_ARE_NOT_FRIENDS", 404);
     }
 
-    const chat = await createDirectChat(userId, friendId);
+    const { chat, wasCreated } = await createDirectChat(userId, friendId);
     const parsedChat = parseChatDto(chat, userId);
+
+    if (wasCreated) {
+        emitNewChat(chat.participants.map(participant => participant.user), chat.id);
+    }
 
     res.status(201).json({
         success: true,
@@ -295,16 +231,19 @@ export async function handleSendMessage(req: AuthenticatedRequest, res: Response
 
     await assertUserIsChatParticipant(userId, chatId);
     const message = await sendMessage(userId, chatId, trimmedText);
+    const messagePayload = {
+        id: message.id,
+        senderId: message.senderId,
+        text: message.text,
+        createdAt: message.createdAt
+    };
+
+    emitNewMessage(chatId, messagePayload);
 
     res.status(201).json({
         success: true,
         data: {
-            message: {
-                id: message.id,
-                senderId: message.senderId,
-                text: message.text,
-                createdAt: message.createdAt
-            }
+            message: messagePayload
         }
     });
 }

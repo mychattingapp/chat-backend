@@ -1,49 +1,20 @@
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { requireEnv } from '../config/env.js';
+import { verifyAccessToken } from '../utils/verifyAccessToken.js';
+import { AppError } from '../errors/AppError.js';
 
 export function authenticateToken(req: Request, res: Response, next: NextFunction) {
-
-    const token = req.cookies['access_token'];
-
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            error: {
-                code: "NO_TOKEN_PROVIDED",
-                message: "No token provided"
-            }
-        });
-    }
-
-    const secret = requireEnv('JWT_ACCESS_TOKEN_SECRET');
-
     try {
-        const tokenPayload = jwt.verify(token, secret);
-        if (typeof tokenPayload !== 'object' || tokenPayload === null || !('id' in tokenPayload)) {
-            return res.status(401).json({
-                success: false,
-                error: {
-                    code: "INVALID_TOKEN",
-                    message: "Invalid token"
-                }
-            });
+        const token = req.cookies['access_token'];
+        if (!token) {
+            return next(new AppError("No token provided", "NO_TOKEN_PROVIDED", 401));
         }
 
-        const { id } = tokenPayload as { id: string };
-        req.user = { id };
-
+        const userId = verifyAccessToken(token);
+        req.user = { id: userId };
         next();
     }
     catch (err) {
-        return res.status(401).json({
-            success: false,
-            error: {
-                code: "INVALID_TOKEN",
-                message: "Invalid token"
-            }
-        });
+        next(err);
     }
-
 }
 
