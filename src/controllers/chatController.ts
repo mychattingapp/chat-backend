@@ -73,11 +73,19 @@ export async function handleCreateDirectChat(req: AuthenticatedRequest, res: Res
     const friendId = req.body.friendId
 
     if (!friendId) {
-        throw new AppError("Body parameter 'friendId' is required.", "MISSING_FRIEND_ID", 400)
+        throw new AppError(
+            "Body parameter 'friendId' is required.",
+            "MISSING_FRIEND_ID",
+            400
+        )
     }
 
     if (!(await validateUsersAreFriends(userId, friendId))) {
-        throw new AppError("Users are not friends.", "USERS_ARE_NOT_FRIENDS", 404);
+        throw new AppError(
+            "Users are not friends.",
+            "USERS_ARE_NOT_FRIENDS",
+            404
+        );
     }
 
     const { chat, wasCreated } = await createDirectChat(userId, friendId);

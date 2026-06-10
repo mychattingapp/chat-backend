@@ -6,7 +6,11 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     try {
         const token = req.cookies['access_token'];
         if (!token) {
-            return next(new AppError("No token provided", "NO_TOKEN_PROVIDED", 401));
+            return next(new AppError(
+                "No token provided",
+                "NO_TOKEN_PROVIDED",
+                401
+            ));
         }
 
         const userId = verifyAccessToken(token);
@@ -17,4 +21,3 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
         next(err);
     }
 }
-

@@ -65,9 +65,10 @@ model Message {
 
   createdAt DateTime @default(now())
 
-  chat        Chat  @relation("messages", fields: [chatId], references: [id])
-  sender      User  @relation("sent", fields: [senderId], references: [id])
-  lastMessage Chat? @relation("lastMessage")
+  chat               Chat              @relation("messages", fields: [chatId], references: [id])
+  sender             User              @relation("sent", fields: [senderId], references: [id])
+  lastMessage        Chat?             @relation("lastMessage")
+  readByParticipants ChatParticipant[] @relation("lastReadMessage")
 
   @@index([chatId, createdAt, id])
 }
@@ -92,19 +93,22 @@ model Chat {
 }
 
 model ChatParticipant {
-  id         String    @id @default(uuid())
-  userId     String
-  lastReadAt DateTime?
-  joinedAt   DateTime  @default(now())
-  leftAt     DateTime?
-  chatId     String
-  isAdmin    Boolean   @default(false)
+  id                String    @id @default(uuid())
+  userId            String
+  lastReadAt        DateTime?
+  lastReadMessageId String?
+  lastReadMessage   Message?  @relation("lastReadMessage", fields: [lastReadMessageId], references: [id])
+  joinedAt          DateTime  @default(now())
+  leftAt            DateTime?
+  chatId            String
+  isAdmin           Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id])
   chat Chat @relation(fields: [chatId], references: [id])
 
   @@unique([chatId, userId])
   @@index([userId])
+  @@index([lastReadMessageId])
 }
 
 enum FriendshipStatus {

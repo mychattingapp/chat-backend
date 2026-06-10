@@ -12,12 +12,20 @@ export function verifyAccessToken(token: string): string {
             || !('id' in tokenPayload)
             || typeof tokenPayload.id !== 'string'
         ) {
-            throw new AppError("Invalid token", "INVALID_TOKEN", 401);
+            throw new AppError(
+                "Invalid token",
+                "INVALID_TOKEN",
+                401
+            );
         }
 
         return tokenPayload.id;
     }
     catch {
-        throw new AppError("Invalid token", "INVALID_TOKEN", 401);
+        throw new AppError(
+            "Invalid token",
+            "INVALID_TOKEN",
+            401
+        );
     }
 }

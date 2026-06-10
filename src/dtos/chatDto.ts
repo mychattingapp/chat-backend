@@ -24,6 +24,8 @@ export type ChatDto = {
     createdAt: Date;
     updatedAt: Date;
     lastMessage: LastMessageDto | null;
+    unreadCount: number;
+    lastReadMessageId: string | null;
 };
 
 export function parseChatDto(chat: ChatWithDetails, userId: string): ChatDto {
@@ -68,6 +70,8 @@ export function parseChatDto(chat: ChatWithDetails, userId: string): ChatDto {
             text: chat.lastMessage.text,
             createdAt: chat.lastMessage.createdAt,
             senderId: chat.lastMessage.senderId
-        } : null
+        } : null,
+        unreadCount: chat.unreadCount ?? 0,
+        lastReadMessageId: chat.lastReadMessageId ?? null
     };
 }
