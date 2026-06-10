@@ -82,7 +82,8 @@ export async function assertCanSendFriendRequest(requesterId: string, recipientI
             throw new AppError(
                 "You previously rejected a friend request from this user.",
                 "FRIEND_REQUEST_PREVIOUSLY_REJECTED_BY_YOU",
-                409)
+                409
+            )
         }
         else if (friendRequest.status === FriendshipStatus.PENDING) {
             if (friendRequest.requesterId === requesterId)
@@ -168,7 +169,11 @@ export async function sendFriendRequest(requesterId: string, recipientEmail: str
     const recipient = await getUserByAnyEmail(recipientEmail);
 
     if (!recipient) {
-        throw new AppError("User not found", "USER_NOT_FOUND", 404);
+        throw new AppError(
+            "User not found",
+            "USER_NOT_FOUND",
+            404
+        );
     }
     if (recipient.id === requesterId) {
         throw new AppError(
@@ -328,14 +333,14 @@ export async function getAllFriends(userId: string) {
                 },
             }
         },
-        orderBy:{
+        orderBy: {
             createdAt: 'desc'
         }
     });
 }
 
 export async function validateUsersAreFriends(user1Id: string, user2Id: string) {
-    const {friend1, friend2} = getFriendshipPair(user1Id, user2Id);
+    const { friend1, friend2 } = getFriendshipPair(user1Id, user2Id);
 
     const friendship = await prisma.friendship.findUnique({
         where: {

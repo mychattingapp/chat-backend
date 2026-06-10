@@ -16,6 +16,10 @@ export type ChatLastMessage = {
 export type ChatWithDetails = Chat & {
     participants: {
         user: ChatParticipantUser;
+        userId: string;
+        lastReadMessageId: string | null;
     }[];
     lastMessage: ChatLastMessage | null;
+    unreadCount?: number;
+    lastReadMessageId?: string | null;
 };

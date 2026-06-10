@@ -30,11 +30,19 @@ export async function handleSendFriendRequest(req: AuthenticatedRequest, res: Re
     const userId = req.user.id
 
     if (!validateEmail(recipientEmail)) {
-        throw new AppError("Invalid email format", "INVALID_EMAIL_FORMAT", 400)
+        throw new AppError(
+            "Invalid email format",
+            "INVALID_EMAIL_FORMAT",
+            400
+        )
     }
 
     if (!recipientEmail) {
-        throw new AppError("email no sent", "yurr", 400)
+        throw new AppError(
+            "email no sent",
+            "yurr",
+            400
+        )
     }
 
     const createdFriendRequest = await sendFriendRequest(userId, recipientEmail)

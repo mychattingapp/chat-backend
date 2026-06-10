@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io";
 import { io } from "../index.js";
-import { assertUserIsChatParticipant, getSingleChat } from "../../services/chatService.js";
+import { assertUserIsChatParticipant, getSingleChat, markChatRead } from "../../services/chatService.js";
 import { parseChatDto } from "../../dtos/chatDto.js";
 import { AppError } from "../../errors/AppError.js";
 import type { ChatParticipantUser } from "../../types/chat.js";
@@ -82,6 +82,48 @@ async function handleJoiningChat(socket: Socket, payload: unknown, ack: (respons
     }
 }
 
+async function handleReadingMessage(socket: Socket, payload: unknown, ack: (response: any) => void) {
+    const userId = socket.data.userId;
+    if (typeof payload !== 'object' || payload === null) {
+        return ack({
+            success: false,
+            error: {
+                code: "INVALID_PAYLOAD",
+                message: "Invalid payload"
+            }
+        });
+    }
+
+    const { chatId, lastReadMessageId } = payload as { chatId?: unknown, lastReadMessageId?: unknown };
+
+    if (!userId || !chatId || !lastReadMessageId || typeof chatId !== 'string' || typeof userId !== 'string' || typeof lastReadMessageId !== 'string' || userId.trim() === '') {
+        return ack({
+            success: false,
+            error: {
+                code: "INVALID_PAYLOAD",
+                message: "Invalid payload"
+            }
+        });
+    }
+
+    try {
+        await markChatRead(userId, chatId, lastReadMessageId)
+
+        return ack({
+            success: true,
+        });
+    }
+    catch (error) {
+        return ack({
+            success: false,
+            error: {
+                code: error instanceof AppError ? error.code : "INTERNAL_ERROR",
+                message: error instanceof AppError ? error.message : "An internal error occurred"
+            }
+        });
+    }
+
+}
 export async function registerChatHandlers(socket: Socket) {
     socket.on('chat:join', (payload, ack) => {
         if (typeof ack !== 'function') {
@@ -94,4 +136,16 @@ export async function registerChatHandlers(socket: Socket) {
 
         void handleJoiningChat(socket, payload, ack);
     });
+
+    socket.on('chat:read', (payload, ack) => {
+        if (typeof ack !== 'function') {
+            socket.emit('chat:error', {
+                code: "ACK_REQUIRED",
+                message: "Acknowledgement callback is required."
+            });
+            return;
+        }
+
+        void handleReadingMessage(socket, payload, ack)
+    })
 }

@@ -7,7 +7,11 @@ export async function getUser(req: AuthenticatedRequest, res: Response) {
     const userId = req.user.id;
     const userObject = await findUser(userId);
     if (!userObject) {
-        throw new AppError("User not found", "USER_NOT_FOUND", 404);
+        throw new AppError(
+            "User not found",
+            "USER_NOT_FOUND",
+            404
+        );
     }
 
     const userData = {
