@@ -65,17 +65,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: docker/setup-buildx-action@v3
 
     - name: Calculate Commit SHA
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-    - name: Build Docker Image and Tag with SHA and Latest
-      run: |
-        docker build -t $IMAGE_NAME:$SHORT_SHA .
-        docker tag $IMAGE_NAME:$SHORT_SHA $IMAGE_NAME:latest
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Login to GHCR and Publish Images
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-        docker push $IMAGE_NAME:$SHORT_SHA
-        docker push $IMAGE_NAME:latest
+    - name: Build and push Docker Image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+          ${{ env.IMAGE_NAME }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
