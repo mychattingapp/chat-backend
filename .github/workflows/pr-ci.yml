@@ -87,3 +87,28 @@ jobs:
           ${{ env.IMAGE_NAME }}:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: publish
+
+    env:
+      RAILWAY_API: "https://backboard.railway.com/graphql/v2"
+
+    steps:
+    - name: Deploy Latest Image to Railway
+      run: |
+        response=$(curl --fail -sS -X POST ${{ env.RAILWAY_API }} \
+        -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+        -H "Content-Type: application/json" \
+        -d '{"query":"mutation { serviceInstanceRedeploy(environmentId:\"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", serviceId:\"${{ secrets.RAILWAY_SERVICE_ID }}\") }"}')
+
+        echo "$response"
+
+        if echo "$response" | grep -q '"serviceInstanceRedeploy":true'; then
+          echo "success"
+        else
+          echo "failure"
+          exit 1
+        fi
