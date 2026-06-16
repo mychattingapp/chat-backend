@@ -2,11 +2,16 @@ import type { Socket } from "socket.io";
 import { joinUserChatRooms } from "./room.js";
 import { registerMessageHandlers } from "./handlers/messageHandler.js";
 import { registerChatHandlers } from "./handlers/chatHandler.js";
+import { registerTypingHandlers } from "./handlers/typingHandler.js";
+import { handlePresenceConnected, registerPresenceHandlers } from "./handlers/presenceHandler.js";
 
 export async function handleConnection(socket: Socket) {
     socket.join(`user:${socket.data.userId}`);
     registerMessageHandlers(socket);
     registerChatHandlers(socket);
+    registerTypingHandlers(socket);
+    registerPresenceHandlers(socket);
     
-    await joinUserChatRooms(socket);
+    const chatIds = await joinUserChatRooms(socket);
+    await handlePresenceConnected(socket, chatIds);
 }

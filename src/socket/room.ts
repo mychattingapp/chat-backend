@@ -9,4 +9,6 @@ export async function joinUserChatRooms(socket: Socket) {
     userChatIds.forEach(chatId => {
         socket.join(`chat:${chatId}`);
     });
+
+    return userChatIds;
 }
