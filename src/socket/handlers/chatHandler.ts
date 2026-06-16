@@ -4,6 +4,7 @@ import { assertUserIsChatParticipant, getSingleChat, markChatRead } from "../../
 import { parseChatDto } from "../../dtos/chatDto.js";
 import { AppError } from "../../errors/AppError.js";
 import type { ChatParticipantUser } from "../../types/chat.js";
+import { isUserOnline, trackPresenceChatForSocket } from "./presenceHandler.js";
 
 function joinConnectedUserSocketsToChat(userId: string, chatId: string) {
     const userRoom = io.sockets.adapter.rooms.get(`user:${userId}`);
@@ -62,12 +63,17 @@ async function handleJoiningChat(socket: Socket, payload: unknown, ack: (respons
         }
 
         const parsedChat = parseChatDto(chat, userId);
+        const onlineUserIds = parsedChat.participants
+            .filter((participant) => participant.id !== userId && isUserOnline(participant.id))
+            .map((participant) => participant.id);
 
         socket.join(`chat:${chatId}`);
+        trackPresenceChatForSocket(socket, chatId);
         return ack({
             success: true,
             data: {
-                chat: parsedChat
+                chat: parsedChat,
+                onlineUserIds
             }
         });
     }

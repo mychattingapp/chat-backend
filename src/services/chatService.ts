@@ -288,6 +288,28 @@ export async function getUsersChatIds(userId: string): Promise<string[]> {
     return chats.map(chat => chat.id)
 }
 
+export async function getUsersChatParticipantIds(userId: string): Promise<string[]> {
+    const chatParticipants = await prisma.chatParticipant.findMany({
+        where: {
+            leftAt: null,
+            chat: {
+                participants: {
+                    some: {
+                        userId: userId,
+                        leftAt: null
+                    }
+                }
+            }
+        },
+        select: {
+            userId: true
+        },
+        distinct: ['userId']
+    });
+
+    return chatParticipants.map((participant) => participant.userId);
+}
+
 export async function markChatRead(userId: string, chatId: string, messageId: string) {
 
     await prisma.$transaction(async tx => {
