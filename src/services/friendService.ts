@@ -322,14 +322,18 @@ export async function getAllFriends(userId: string) {
                 select: {
                     id: true,
                     username: true,
-                    email: true
+                    email: true,
+                    profileImageUrl: true,
+                    updatedAt: true
                 },
             },
             friend2Relation: {
                 select: {
                     id: true,
                     username: true,
-                    email: true
+                    email: true,
+                    profileImageUrl: true,
+                    updatedAt: true
                 },
             }
         },

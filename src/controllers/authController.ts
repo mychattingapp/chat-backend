@@ -84,6 +84,8 @@ export async function fetchUserData(req: AuthenticatedRequest, res: Response) {
         id: userObject.id,
         name: userObject.username,
         email: userObject.email,
+        profileImageUrl: userObject.profileImageUrl,
+        updatedAt: userObject.updatedAt
     };
 
     return res.status(200).json({

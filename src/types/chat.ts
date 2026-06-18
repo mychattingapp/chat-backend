@@ -4,6 +4,8 @@ export type ChatParticipantUser = {
     id: string;
     username: string;
     email: string;
+    profileImageUrl: string | null;
+    updatedAt: Date;
 };
 
 export type ChatLastMessage = {

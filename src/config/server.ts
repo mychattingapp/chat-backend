@@ -13,6 +13,8 @@ import { friendRouter } from '../routes/friendRouter.js';
 import { logger } from '../middleware/logger.js';
 import { errorHandler } from '../utils/errorHandler.js';
 import { chatRouter } from '../routes/chatRouter.js';
+import { userRouter } from '../routes/userRouter.js';
+import { imageRouter } from '../routes/imageRouter.js';
 
 export const app = express();
 
@@ -27,6 +29,8 @@ app.use(passport.initialize());
 app.use('/api/auth', authRouter);
 app.use('/api/friends', friendRouter);
 app.use('/api/chats', chatRouter);
+app.use('/api/users', userRouter);
+app.use('/api/images', imageRouter);
 
 app.use(logger);
 

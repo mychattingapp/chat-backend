@@ -29,3 +29,25 @@ export async function getUserByAnyEmail(emailId: string): Promise<User | null> {
     });
     return user;
 }
+
+export async function updateUserProfile(userId: string, data: { username: string }): Promise<User> {
+    return prisma.user.update({
+        where: {
+            id: userId
+        },
+        data: {
+            username: data.username
+        }
+    });
+}
+
+export async function updateUserProfileImageUrl(userId: string, profileImageUrl: string): Promise<User> {
+    return prisma.user.update({
+        where: {
+            id: userId
+        },
+        data: {
+            profileImageUrl
+        }
+    });
+}

@@ -18,12 +18,14 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(uuid())
-  username String
-  email    String @unique
-  auths    Auth[]
+  id              String  @id @default(uuid())
+  username        String
+  email           String  @unique
+  profileImageUrl String?
+  auths           Auth[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   sentMessages Message[] @relation("sent")
 

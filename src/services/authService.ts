@@ -3,6 +3,8 @@ import { prisma } from '../config/prismaClient.js';
 import { requireEnv } from '../config/env.js';
 import type { Prisma, User } from '@prisma/client';
 import type { AuthProvider } from '@prisma/client';
+import { uploadProviderImageToR2 } from './imageService.js';
+import { updateUserProfileImageUrl } from './userService.js';
 const refreshTokenTTL = Number(requireEnv('REFRESH_TOKEN_TTL'));
 const accessTokenTTL = Number(requireEnv('ACCESS_TOKEN_TTL'));
 
@@ -11,7 +13,7 @@ export async function signAccessToken(userId: string) {
 }
 
 export async function signRefreshToken(userId: string) {
-    return jwt.sign({ id: userId }, requireEnv('JWT_REFRESH_TOKEN_SECRET'), { expiresIn: refreshTokenTTL/1000 });
+    return jwt.sign({ id: userId }, requireEnv('JWT_REFRESH_TOKEN_SECRET'), { expiresIn: refreshTokenTTL / 1000 });
 }
 
 export async function storeRefreshToken(userId: string, refreshToken: string) {
@@ -26,9 +28,9 @@ export async function storeRefreshToken(userId: string, refreshToken: string) {
     })
 }
 
-export async function findOrCreateUser(data: { providerId: string; provider: AuthProvider; email: string; username: string }): Promise<User> {
+export async function findOrCreateUser(data: { providerId: string; provider: AuthProvider; email: string; username: string; googleProfileImageUrl?: string | null }): Promise<User> {
 
-    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    let user = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
         let userAuth = await tx.auth.findUnique({
             where: {
@@ -52,6 +54,7 @@ export async function findOrCreateUser(data: { providerId: string; provider: Aut
                     email: data.email,
                 }
             });
+
             return userAuth.user;
         }
 
@@ -65,7 +68,7 @@ export async function findOrCreateUser(data: { providerId: string; provider: Aut
             user = await tx.user.create({
                 data: {
                     email: data.email,
-                    username: data.username
+                    username: data.username,
                 }
             });
         }
@@ -81,6 +84,18 @@ export async function findOrCreateUser(data: { providerId: string; provider: Aut
 
         return user;
     });
+
+    try {
+        if (!user.profileImageUrl && data.googleProfileImageUrl) {
+            const profileImageUrl = await uploadProviderImageToR2(user.id, data.googleProfileImageUrl);
+            user = await updateUserProfileImageUrl(user.id, profileImageUrl);
+        }
+    }
+    catch (error) {
+        console.warn("Failed to mirror Google profile image", error);
+    }
+
+    return user;
 }
 
 export async function clearRefreshToken(userId: string) {
