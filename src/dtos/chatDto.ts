@@ -6,6 +6,8 @@ export type ChatParticipantDto = {
     id: string;
     username: string;
     email: string;
+    profileImageUrl: string | null;
+    updatedAt: Date;
 };
 
 export type LastMessageDto = {
@@ -33,7 +35,9 @@ export function parseChatDto(chat: ChatWithDetails, userId: string): ChatDto {
         .map(participant => ({
             id: participant.user.id,
             username: participant.user.username,
-            email: participant.user.email
+            email: participant.user.email,
+            profileImageUrl: participant.user.profileImageUrl,
+            updatedAt: participant.user.updatedAt
         }))
         .filter(participant => chat.chatType === ChatType.GROUP
             || participant.id !== userId);

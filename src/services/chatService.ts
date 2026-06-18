@@ -15,7 +15,9 @@ const chatWithDetailsInclude = {
                 select: {
                     id: true,
                     username: true,
-                    email: true
+                    email: true,
+                    profileImageUrl: true,
+                    updatedAt: true
                 }
             }
         }
@@ -164,7 +166,9 @@ export async function getSingleChat(userId: string, chatId: string): Promise<Cha
                             select: {
                                 id: true,
                                 username: true,
-                                email: true
+                                email: true,
+                                profileImageUrl: true,
+                                updatedAt: true
                             }
                         }
                     }

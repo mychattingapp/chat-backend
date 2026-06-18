@@ -57,7 +57,9 @@ export async function handleSendFriendRequest(req: AuthenticatedRequest, res: Re
                 recipient: {
                     id: createdFriendRequest.recipient.id,
                     username: createdFriendRequest.recipient.username,
-                    email: createdFriendRequest.recipient.email
+                    email: createdFriendRequest.recipient.email,
+                    profileImageUrl: createdFriendRequest.recipient.profileImageUrl,
+                    updatedAt: createdFriendRequest.recipient.updatedAt
                 }
             }
         }
@@ -88,7 +90,9 @@ export async function handleAcceptFriendRequest(req: AuthenticatedRequest, res: 
                 requester: {
                     id: updatedFriendRequest.requester.id,
                     username: updatedFriendRequest.requester.username,
-                    email: updatedFriendRequest.requester.email
+                    email: updatedFriendRequest.requester.email,
+                    profileImageUrl: updatedFriendRequest.requester.profileImageUrl,
+                    updatedAt: updatedFriendRequest.requester.updatedAt
                 }
             }
         }
@@ -119,7 +123,9 @@ export async function handleRejectFriendRequest(req: AuthenticatedRequest, res: 
                 requester: {
                     id: updatedFriendRequest.requester.id,
                     username: updatedFriendRequest.requester.username,
-                    email: updatedFriendRequest.requester.email
+                    email: updatedFriendRequest.requester.email,
+                    profileImageUrl: updatedFriendRequest.requester.profileImageUrl,
+                    updatedAt: updatedFriendRequest.requester.updatedAt
                 }
             }
         }
@@ -142,7 +148,9 @@ export async function handleGetSentFriendRequests(req: AuthenticatedRequest, res
                 recipient: {
                     id: friendRequest.recipient.id,
                     username: friendRequest.recipient.username,
-                    email: friendRequest.recipient.email
+                    email: friendRequest.recipient.email,
+                    profileImageUrl: friendRequest.recipient.profileImageUrl,
+                    updatedAt: friendRequest.recipient.updatedAt
                 }
             }))
         }
@@ -165,7 +173,9 @@ export async function handleGetReceivedFriendRequests(req: AuthenticatedRequest,
                 requester: {
                     id: friendRequest.requester.id,
                     username: friendRequest.requester.username,
-                    email: friendRequest.requester.email
+                    email: friendRequest.requester.email,
+                    profileImageUrl: friendRequest.requester.profileImageUrl,
+                    updatedAt: friendRequest.requester.updatedAt
                 }
             }))
         }
@@ -186,12 +196,16 @@ export async function handleGetAllFriends(req: AuthenticatedRequest, res: Respon
                         friendshipId: friendship.id,
                         id: friendship.friend2Relation.id,
                         username: friendship.friend2Relation.username,
-                        email: friendship.friend2Relation.email
+                        email: friendship.friend2Relation.email,
+                        profileImageUrl: friendship.friend2Relation.profileImageUrl,
+                        updatedAt: friendship.friend2Relation.updatedAt
                     } : {
                         friendshipId: friendship.id,
                         id: friendship.friend1Relation.id,
                         username: friendship.friend1Relation.username,
-                        email: friendship.friend1Relation.email
+                        email: friendship.friend1Relation.email,
+                        profileImageUrl: friendship.friend1Relation.profileImageUrl,
+                        updatedAt: friendship.friend1Relation.updatedAt
                     }
             ))
         }

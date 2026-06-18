@@ -26,7 +26,7 @@ export async function storeRefreshToken(userId: string, refreshToken: string) {
     })
 }
 
-export async function findOrCreateUser(data: { providerId: string; provider: AuthProvider; email: string; username: string }): Promise<User> {
+export async function findOrCreateUser(data: { providerId: string; provider: AuthProvider; email: string; username: string; profileImageUrl?: string | null }): Promise<User> {
 
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
@@ -52,6 +52,18 @@ export async function findOrCreateUser(data: { providerId: string; provider: Aut
                     email: data.email,
                 }
             });
+
+            if (!userAuth.user.profileImageUrl && data.profileImageUrl) {
+                return tx.user.update({
+                    where: {
+                        id: userAuth.user.id
+                    },
+                    data: {
+                        profileImageUrl: data.profileImageUrl
+                    }
+                });
+            }
+
             return userAuth.user;
         }
 
@@ -65,7 +77,18 @@ export async function findOrCreateUser(data: { providerId: string; provider: Aut
             user = await tx.user.create({
                 data: {
                     email: data.email,
-                    username: data.username
+                    username: data.username,
+                    profileImageUrl: data.profileImageUrl ?? null
+                }
+            });
+        }
+        else if (!user.profileImageUrl && data.profileImageUrl) {
+            user = await tx.user.update({
+                where: {
+                    id: user.id
+                },
+                data: {
+                    profileImageUrl: data.profileImageUrl
                 }
             });
         }

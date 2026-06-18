@@ -16,7 +16,8 @@ export function registerPassportStrategies() {
                     provider: AuthProvider.GOOGLE,
                     providerId: profile.id,
                     email: profile.emails[0].value,
-                    username: profile.displayName
+                    username: profile.displayName,
+                    profileImageUrl: profile.photos?.[0]?.value ?? null
                 });
 
                 return done(null, { id: user.id });
