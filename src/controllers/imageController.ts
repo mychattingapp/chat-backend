@@ -5,16 +5,16 @@ import { generatePresignedUrl, verifyImageUpload } from "../services/imageServic
 import { updateUserProfileImageUrl } from "../services/userService.js";
 import { cloudflareUrl } from "../config/r2Client.js";
 import { randomUUID } from "crypto";
-
-const ALLOWED_FILE_TYPES = ["image/png", "image/jpeg"] as const;
-const ALLOWED_UPLOAD_PURPOSES = ['message', 'avatar'] as const;
-const MAX_FILE_SIZE = 5 * 1024 * 1024
-
-export type FileType = typeof ALLOWED_FILE_TYPES[number];
-type UploadPurpose = typeof ALLOWED_UPLOAD_PURPOSES[number];
+import {
+    ALLOWED_IMAGE_CONTENT_TYPES,
+    IMAGE_UPLOAD_PURPOSES,
+    MAX_IMAGE_SIZE_BYTES,
+    type ImageContentType,
+    type ImageUploadPurpose
+} from "../types/image.js";
 
 function validateFileMetadata(fileType: any, fileSize: any, purpose: any) {
-    if (!fileType || typeof fileType !== "string" || !ALLOWED_FILE_TYPES.includes(fileType as FileType)) {
+    if (!fileType || typeof fileType !== "string" || !ALLOWED_IMAGE_CONTENT_TYPES.includes(fileType as ImageContentType)) {
         throw new AppError(
             "Unsupported image format.",
             "INVALID_FILE_TYPE",
@@ -28,14 +28,14 @@ function validateFileMetadata(fileType: any, fileSize: any, purpose: any) {
             400
         )
     }
-    if (fileSize > MAX_FILE_SIZE) {
+    if (fileSize > MAX_IMAGE_SIZE_BYTES) {
         throw new AppError(
             "Image cannot exceed 5 MB.",
             "FILE_TOO_LARGE",
             400
         )
     }
-    if (typeof purpose !== 'string' || !ALLOWED_UPLOAD_PURPOSES.includes(purpose as UploadPurpose)) {
+    if (typeof purpose !== 'string' || !IMAGE_UPLOAD_PURPOSES.includes(purpose as ImageUploadPurpose)) {
         throw new AppError(
             "Upload purpose is invalid.",
             "INVALID_UPLOAD_PURPOSE",
@@ -44,8 +44,8 @@ function validateFileMetadata(fileType: any, fileSize: any, purpose: any) {
     }
 
     return {
-        fileType: fileType as FileType,
-        purpose: purpose as UploadPurpose
+        fileType: fileType as ImageContentType,
+        purpose: purpose as ImageUploadPurpose
     }
 }
 

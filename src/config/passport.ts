@@ -17,7 +17,7 @@ export function registerPassportStrategies() {
                     providerId: profile.id,
                     email: profile.emails[0].value,
                     username: profile.displayName,
-                    profileImageUrl: profile.photos?.[0]?.value ?? null
+                    googleProfileImageUrl: profile.photos?.[0]?.value ?? null
                 });
 
                 return done(null, { id: user.id });
