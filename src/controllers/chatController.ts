@@ -2,9 +2,9 @@ import type { Response } from "express";
 import type { AuthenticatedRequest } from "../types/express.js";
 import { AppError } from "../errors/AppError.js";
 import { validateUsersAreFriends } from "../services/friendService.js";
-import { assertUserIsChatParticipant, createDirectChat, getAllChats, getChatMessages, getSingleChat, sendMessage } from "../services/chatService.js";
+import { createDirectChat, getAllChats, getChatMessages, getMessageImageReadUrl, getSingleChat, sendMessage } from "../services/chatService.js";
 import { ChatType } from "@prisma/client";
-import { parseChatDto } from "../dtos/chatDto.js";
+import { parseChatDto, parseMessageDto, parseSendMessageInput } from "../dtos/chatDto.js";
 import { emitNewChat } from "../socket/handlers/chatHandler.js";
 import { emitNewMessage } from "../socket/handlers/messageHandler.js";
 
@@ -195,12 +195,7 @@ export async function handleGetMessages(req: AuthenticatedRequest, res: Response
         success: true,
         data: {
             nextCursor,
-            messages: pageMessages.map(message => ({
-                id: message.id,
-                senderId: message.senderId,
-                text: message.text,
-                createdAt: message.createdAt
-            })).reverse(),
+            messages: pageMessages.map(parseMessageDto).reverse(),
             hasMore
         }
     });
@@ -209,7 +204,6 @@ export async function handleGetMessages(req: AuthenticatedRequest, res: Response
 export async function handleSendMessage(req: AuthenticatedRequest, res: Response) {
     const userId = req.user.id;
     const chatId = req.params.chatId;
-    let text = req.body.text;
 
     if (!chatId) {
         throw new AppError(
@@ -219,32 +213,9 @@ export async function handleSendMessage(req: AuthenticatedRequest, res: Response
         );
     }
 
-    if (!text || typeof text !== "string" || text.trim() === "") {
-        throw new AppError(
-            "Message text is required.",
-            "MESSAGE_TEXT_REQUIRED",
-            400
-        );
-    }
-
-    const trimmedText = text.trim();
-
-    if (trimmedText.length > 2000) {
-        throw new AppError(
-            "Message text cannot exceed 2000 characters.",
-            "MESSAGE_TEXT_TOO_LONG",
-            400
-        );
-    }
-
-    await assertUserIsChatParticipant(userId, chatId);
-    const message = await sendMessage(userId, chatId, trimmedText);
-    const messagePayload = {
-        id: message.id,
-        senderId: message.senderId,
-        text: message.text,
-        createdAt: message.createdAt
-    };
+    const messageInput = parseSendMessageInput(req.body);
+    const message = await sendMessage(userId, chatId, messageInput);
+    const messagePayload = parseMessageDto(message);
 
     emitNewMessage(chatId, messagePayload);
 
@@ -252,6 +223,37 @@ export async function handleSendMessage(req: AuthenticatedRequest, res: Response
         success: true,
         data: {
             message: messagePayload
+        }
+    });
+}
+
+export async function handleGetMessageImageUrl(req: AuthenticatedRequest, res: Response) {
+    const userId = req.user.id;
+    const chatId = req.params.chatId;
+    const messageId = req.params.messageId;
+
+    if (!chatId) {
+        throw new AppError(
+            "Chat ID is required.",
+            "CHAT_ID_REQUIRED",
+            400
+        );
+    }
+
+    if (!messageId) {
+        throw new AppError(
+            "Message ID is required.",
+            "MESSAGE_ID_REQUIRED",
+            400
+        );
+    }
+
+    const imageUrl = await getMessageImageReadUrl(userId, chatId, messageId);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            imageUrl
         }
     });
 }

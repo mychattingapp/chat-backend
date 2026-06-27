@@ -1,0 +1,5 @@
+ALTER TABLE "Message" ALTER COLUMN "text" DROP NOT NULL;
+
+ALTER TABLE "Message"
+ADD COLUMN "imageKey" TEXT,
+ADD COLUMN "imageContentType" TEXT;

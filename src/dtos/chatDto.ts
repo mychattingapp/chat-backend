@@ -12,7 +12,9 @@ export type ChatParticipantDto = {
 
 export type LastMessageDto = {
     id: string;
-    text: string;
+    text: string | null;
+    hasImage: boolean;
+    imageContentType: string | null;
     createdAt: Date;
     senderId: string;
 };
@@ -29,6 +31,85 @@ export type ChatDto = {
     unreadCount: number;
     lastReadMessageId: string | null;
 };
+
+export type MessageDto = {
+    id: string;
+    senderId: string;
+    text: string | null;
+    hasImage: boolean;
+    imageContentType: string | null;
+    createdAt: Date;
+};
+
+export type SendMessageInputDto = {
+    text: string | null;
+    imageKey: string | null;
+};
+
+type MessageLike = {
+    id: string;
+    senderId: string;
+    text: string | null;
+    imageKey?: string | null;
+    imageContentType?: string | null;
+    createdAt: Date;
+};
+
+export function parseMessageDto(message: MessageLike): MessageDto {
+    return {
+        id: message.id,
+        senderId: message.senderId,
+        text: message.text,
+        hasImage: !!message.imageKey,
+        imageContentType: message.imageContentType ?? null,
+        createdAt: message.createdAt
+    };
+}
+
+export function parseSendMessageInput(input: unknown): SendMessageInputDto {
+    if (typeof input !== "object" || input === null) {
+        throw new AppError(
+            "Invalid payload.",
+            "INVALID_PAYLOAD",
+            400
+        );
+    }
+
+    const { text, imageKey } = input as { text?: unknown; imageKey?: unknown };
+
+    if (text !== undefined && text !== null && typeof text !== "string") {
+        throw new AppError(
+            "Message text must be a string.",
+            "INVALID_MESSAGE_TEXT",
+            400
+        );
+    }
+
+    if (imageKey !== undefined && imageKey !== null && (typeof imageKey !== "string" || imageKey.trim() === "")) {
+        throw new AppError(
+            "Image key must be a string.",
+            "INVALID_IMAGE_KEY",
+            400
+        );
+    }
+
+    const trimmedText = typeof text === "string" ? text.trim() : "";
+
+    if (trimmedText.length > 2000) {
+        throw new AppError(
+            "Message text cannot exceed 2000 characters.",
+            "MESSAGE_TEXT_TOO_LONG",
+            400
+        );
+    }
+
+    const trimmedImageKey = typeof imageKey === "string" ? imageKey.trim() : "";
+
+    return {
+        text: trimmedText || null,
+        imageKey: trimmedImageKey || null
+    };
+}
 
 export function parseChatDto(chat: ChatWithDetails, userId: string): ChatDto {
     const participants = chat.participants
@@ -69,12 +150,7 @@ export function parseChatDto(chat: ChatWithDetails, userId: string): ChatDto {
         participants,
         createdAt: chat.createdAt,
         updatedAt: chat.updatedAt,
-        lastMessage: chat.lastMessage ? {
-            id: chat.lastMessage.id,
-            text: chat.lastMessage.text,
-            createdAt: chat.lastMessage.createdAt,
-            senderId: chat.lastMessage.senderId
-        } : null,
+        lastMessage: chat.lastMessage ? parseMessageDto(chat.lastMessage) : null,
         unreadCount: chat.unreadCount ?? 0,
         lastReadMessageId: chat.lastReadMessageId ?? null
     };

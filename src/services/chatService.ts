@@ -2,6 +2,7 @@ import { ChatType, Prisma } from "@prisma/client";
 import { prisma } from "../config/prismaClient.js";
 import { AppError } from "../errors/AppError.js";
 import type { ChatWithDetails } from "../types/chat.js";
+import { generatePresignedReadUrl, verifyImageUpload } from "./imageService.js";
 
 function makeDirectKey(user1Id: string, user2Id: string): string {
     const [friend1, friend2] = [user1Id, user2Id].sort() as [string, string];
@@ -26,6 +27,8 @@ const chatWithDetailsInclude = {
         select: {
             id: true,
             text: true,
+            imageKey: true,
+            imageContentType: true,
             createdAt: true,
             senderId: true,
         }
@@ -177,6 +180,8 @@ export async function getSingleChat(userId: string, chatId: string): Promise<Cha
                     select: {
                         id: true,
                         text: true,
+                        imageKey: true,
+                        imageContentType: true,
                         createdAt: true,
                         senderId: true
                     }
@@ -250,14 +255,52 @@ export async function assertUserIsChatParticipant(userId: string, chatId: string
     }
 }
 
-export async function sendMessage(userId: string, chatId: string, text: string) {
+type SendMessageInput = {
+    text: string | null;
+    imageKey: string | null;
+};
+
+function assertMessageImageBelongsToUser(userId: string, imageKey: string) {
+    const expectedPrefix = `message-images/${userId}/`;
+
+    if (!imageKey.startsWith(expectedPrefix)) {
+        throw new AppError(
+            "Image upload is not owned by this user.",
+            "IMAGE_UPLOAD_NOT_OWNED",
+            403
+        );
+    }
+}
+
+export async function sendMessage(userId: string, chatId: string, input: SendMessageInput) {
+    const { text, imageKey } = input;
+
+    if (!text && !imageKey) {
+        throw new AppError(
+            "Message text or image is required.",
+            "MESSAGE_CONTENT_REQUIRED",
+            400
+        );
+    }
+
+    if (imageKey) {
+        assertMessageImageBelongsToUser(userId, imageKey);
+    }
+
+    await assertUserIsChatParticipant(userId, chatId);
+
+    const imageMetadata = imageKey
+        ? await verifyImageUpload(imageKey)
+        : null;
 
     return await prisma.$transaction(async (tx) => {
         const message = await tx.message.create({
             data: {
                 chatId,
                 senderId: userId,
-                text
+                text,
+                imageKey,
+                imageContentType: imageMetadata?.contentType ?? null
             }
         });
 
@@ -273,6 +316,44 @@ export async function sendMessage(userId: string, chatId: string, text: string) 
         return message;
     });
 
+}
+
+export async function getMessageImageReadUrl(userId: string, chatId: string, messageId: string) {
+    const message = await prisma.message.findFirst({
+        where: {
+            id: messageId,
+            chatId,
+            chat: {
+                participants: {
+                    some: {
+                        userId,
+                        leftAt: null
+                    }
+                }
+            }
+        },
+        select: {
+            imageKey: true
+        }
+    });
+
+    if (!message) {
+        throw new AppError(
+            "Message not found.",
+            "MESSAGE_NOT_FOUND",
+            404
+        );
+    }
+
+    if (!message.imageKey) {
+        throw new AppError(
+            "Message does not have an image.",
+            "MESSAGE_IMAGE_NOT_FOUND",
+            404
+        );
+    }
+
+    return generatePresignedReadUrl(message.imageKey);
 }
 
 export async function getUsersChatIds(userId: string): Promise<string[]> {
