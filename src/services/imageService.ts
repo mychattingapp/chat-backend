@@ -1,6 +1,6 @@
 import { S3, bucket, cloudflareUrl } from '../config/r2Client.js'
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PutObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, HeadObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { AppError } from '../errors/AppError.js';
 import { ALLOWED_IMAGE_CONTENT_TYPES, MAX_IMAGE_SIZE_BYTES, type ImageContentType } from '../types/image.js';
 
@@ -20,6 +20,17 @@ export async function generatePresignedUrl(key: string, contentType: ImageConten
     return putUrl;
 }
 
+export async function generatePresignedReadUrl(key: string) {
+    return getSignedUrl(
+        S3,
+        new GetObjectCommand({
+            Bucket: bucket,
+            Key: key,
+        }),
+        { expiresIn: 300 },
+    );
+}
+
 export async function verifyImageUpload(key: string) {
     let imageMetadata;
 
@@ -33,13 +44,15 @@ export async function verifyImageUpload(key: string) {
     }
     catch (error) {
         throw new AppError(
-            "Avatar upload not found.",
+            "Image upload not found.",
             "UPLOAD_NOT_FOUND",
             400
         );
     }
 
-    if (!isAllowedImageContentType(imageMetadata.ContentType)) {
+    const contentType = imageMetadata.ContentType;
+
+    if (!isAllowedImageContentType(contentType)) {
         await deleteImageObject(key);
         throw new AppError(
             "Unsupported image format.",
@@ -56,6 +69,11 @@ export async function verifyImageUpload(key: string) {
             400
         );
     }
+
+    return {
+        contentType,
+        contentLength: imageMetadata.ContentLength ?? null,
+    };
 }
 
 async function deleteImageObject(key: string) {

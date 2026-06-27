@@ -1,16 +1,10 @@
 import type { Socket } from "socket.io";
-import { assertUserIsChatParticipant, sendMessage } from "../../services/chatService.js";
+import { sendMessage } from "../../services/chatService.js";
 import { AppError } from "../../errors/AppError.js";
 import { io } from "../index.js";
+import { parseMessageDto, parseSendMessageInput, type MessageDto } from "../../dtos/chatDto.js";
 
-type NewMessagePayload = {
-    id: string;
-    senderId: string;
-    text: string;
-    createdAt: Date;
-};
-
-export function emitNewMessage(chatId: string, message: NewMessagePayload, senderSocket?: Socket) {
+export function emitNewMessage(chatId: string, message: MessageDto, senderSocket?: Socket) {
     const payload = {
         chatId,
         message
@@ -36,9 +30,9 @@ async function handleSendingMessage(socket: Socket, payload: unknown, ack: (resp
         });
     }
 
-    const { chatId, text } = payload as { chatId?: unknown; text?: unknown };
+    const { chatId } = payload as { chatId?: unknown };
 
-    if (!text || !chatId || typeof chatId !== 'string' || typeof text !== 'string' || text.trim() === '') {
+    if (!chatId || typeof chatId !== 'string') {
         return ack({
             success: false,
             error: {
@@ -48,27 +42,10 @@ async function handleSendingMessage(socket: Socket, payload: unknown, ack: (resp
         });
     }
 
-    const trimmedText = text.trim();
-    if (trimmedText.length > 2000) {
-        return ack({
-            success: false,
-            error: {
-                code: "MESSAGE_TEXT_TOO_LONG",
-                message: "Message text cannot exceed 2000 characters."
-            }
-        });
-    }
-
     try {
-        await assertUserIsChatParticipant(userId, chatId);
-        const message = await sendMessage(userId, chatId, trimmedText);
-
-        const messagePayload = {
-            id: message.id,
-            senderId: message.senderId,
-            text: message.text,
-            createdAt: message.createdAt
-        };
+        const messageInput = parseSendMessageInput(payload);
+        const message = await sendMessage(userId, chatId, messageInput);
+        const messagePayload = parseMessageDto(message);
         
         emitNewMessage(chatId, messagePayload, socket);
         return ack({

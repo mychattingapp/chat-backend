@@ -25,6 +25,10 @@ function parseFriendRequestStatus(status: unknown): FriendshipStatus {
     );
 }
 
+function getVisibleProfileImageUrl(status: FriendshipStatus, profileImageUrl: string | null) {
+    return status === FriendshipStatus.ACCEPTED ? profileImageUrl : null;
+}
+
 export async function handleSendFriendRequest(req: AuthenticatedRequest, res: Response) {
     const recipientEmail = req.body.recipientEmail
     const userId = req.user.id
@@ -58,7 +62,7 @@ export async function handleSendFriendRequest(req: AuthenticatedRequest, res: Re
                     id: createdFriendRequest.recipient.id,
                     username: createdFriendRequest.recipient.username,
                     email: createdFriendRequest.recipient.email,
-                    profileImageUrl: createdFriendRequest.recipient.profileImageUrl,
+                    profileImageUrl: getVisibleProfileImageUrl(createdFriendRequest.status, createdFriendRequest.recipient.profileImageUrl),
                     updatedAt: createdFriendRequest.recipient.updatedAt
                 }
             }
@@ -91,7 +95,7 @@ export async function handleAcceptFriendRequest(req: AuthenticatedRequest, res: 
                     id: updatedFriendRequest.requester.id,
                     username: updatedFriendRequest.requester.username,
                     email: updatedFriendRequest.requester.email,
-                    profileImageUrl: updatedFriendRequest.requester.profileImageUrl,
+                    profileImageUrl: getVisibleProfileImageUrl(updatedFriendRequest.status, updatedFriendRequest.requester.profileImageUrl),
                     updatedAt: updatedFriendRequest.requester.updatedAt
                 }
             }
@@ -124,7 +128,7 @@ export async function handleRejectFriendRequest(req: AuthenticatedRequest, res: 
                     id: updatedFriendRequest.requester.id,
                     username: updatedFriendRequest.requester.username,
                     email: updatedFriendRequest.requester.email,
-                    profileImageUrl: updatedFriendRequest.requester.profileImageUrl,
+                    profileImageUrl: getVisibleProfileImageUrl(updatedFriendRequest.status, updatedFriendRequest.requester.profileImageUrl),
                     updatedAt: updatedFriendRequest.requester.updatedAt
                 }
             }
@@ -149,7 +153,7 @@ export async function handleGetSentFriendRequests(req: AuthenticatedRequest, res
                     id: friendRequest.recipient.id,
                     username: friendRequest.recipient.username,
                     email: friendRequest.recipient.email,
-                    profileImageUrl: friendRequest.recipient.profileImageUrl,
+                    profileImageUrl: getVisibleProfileImageUrl(friendRequest.status, friendRequest.recipient.profileImageUrl),
                     updatedAt: friendRequest.recipient.updatedAt
                 }
             }))
@@ -174,7 +178,7 @@ export async function handleGetReceivedFriendRequests(req: AuthenticatedRequest,
                     id: friendRequest.requester.id,
                     username: friendRequest.requester.username,
                     email: friendRequest.requester.email,
-                    profileImageUrl: friendRequest.requester.profileImageUrl,
+                    profileImageUrl: getVisibleProfileImageUrl(friendRequest.status, friendRequest.requester.profileImageUrl),
                     updatedAt: friendRequest.requester.updatedAt
                 }
             }))

@@ -6,6 +6,10 @@ Backend for **mychattingapp** - a real-time chat application.
 
 - Frontend: https://github.com/mychattingapp/chat-frontend
 
+## Project Overview
+
+This backend powers **mychattingapp**, a real-time messaging application with secure sign-in, friend requests, direct chats, text and image messages, message history, read state, presence, typing indicators, and profile avatar support.
+
 ## Tech Stack
 
 - **Node.js + Express** (TypeScript)
@@ -13,6 +17,7 @@ Backend for **mychattingapp** - a real-time chat application.
 - **Passport.js** (Google OAuth 2.0)
 - **JWT access/refresh tokens** stored in **HttpOnly cookies**
 - **Socket.IO** for authenticated real-time chat events
+- **Cloudflare R2** for profile image storage, private message image storage, and signed image uploads/downloads
 
 ## Auth Overview
 
@@ -31,9 +36,12 @@ Backend for **mychattingapp** - a real-time chat application.
 - JWT access/refresh token auth with HttpOnly cookies is implemented.
 - PostgreSQL + Prisma integration is in place.
 - Friend request send/accept/reject/list flows are implemented.
+- Friend request responses hide profile image URLs unless the friendship is accepted.
 - Direct chat creation and chat listing are implemented.
-- Message pagination and message sending are implemented.
-- Socket.IO chat rooms support joining chats, new-chat notifications, and real-time new-message events.
+- Message pagination and text/image message sending are implemented.
+- Private message images use signed Cloudflare R2 upload/read URLs and are only exposed to users in the chat.
+- User profile updates and avatar upload URLs backed by Cloudflare R2 are implemented.
+- Socket.IO chat rooms support joining chats, read receipts, presence, typing indicators, new-chat notifications, and real-time new-message events.
 - Dockerized backend and local Compose-based database setup are in place.
 - CI build validation is configured.
 
@@ -75,12 +83,20 @@ JWT_REFRESH_TOKEN_SECRET=change_me
 # Cookie/JWT TTLs (milliseconds)
 ACCESS_TOKEN_TTL=3600000
 REFRESH_TOKEN_TTL=604800000
+
+# Cloudflare R2
+CLOUDFLARE_R2_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
+CLOUDFLARE_R2_ACCESS_KEY=your_r2_access_key
+CLOUDFLARE_R2_SECRET_KEY=your_r2_secret_key
+CLOUDFLARE_R2_BUCKET=your_r2_bucket
+CLOUDFLARE_R2_PUBLIC_URL=https://your_public_r2_domain
 ```
 
 Notes:
 - `ACCESS_TOKEN_TTL` and `REFRESH_TOKEN_TTL` are used for cookie expiration and refresh-session expiry.
 - JWT access/refresh token lifetimes should be aligned with the TTLs above.
 - `CLIENT_URL` must match the frontend origin because CORS and Socket.IO credentials are restricted to this value.
+- Cloudflare R2 variables are required for avatar uploads, message image uploads, signed message image reads, and storing OAuth provider profile images.
 
 ### 3) Database Setup
 
@@ -122,6 +138,13 @@ npm run prisma:erd
 
 Generates the Prisma client and optional ERD output.
 
+## Deployment
+
+- On pushes to `main`, GitHub Actions verifies the build and runs `npx prisma migrate deploy`.
+- Docker image builds are published to **GitHub Container Registry (GHCR)**.
+- Continuous deployment deploys the backend to **Railway**.
+- Runtime environment variables are managed in Railway.
+
 ## API Routes
 
 All routes except OAuth entry/failure, refresh, logout, and health require a valid access token cookie.
@@ -150,7 +173,18 @@ All routes except OAuth entry/failure, refresh, logout, and health require a val
 - `GET /api/chats` - list chats, supports chat type filtering
 - `GET /api/chats/:chatId` - get one chat
 - `GET /api/chats/:chatId/messages` - get paginated messages
-- `POST /api/chats/:chatId/messages` - send a message over REST
+- `POST /api/chats/:chatId/messages` - send a text and/or image message over REST
+- `GET /api/chats/:chatId/messages/:messageId/image-url` - create a signed read URL for a private message image
+
+### Users
+
+- `GET /api/users/me` - get the current user's profile
+- `PATCH /api/users/me` - update the current user's profile
+
+### Images
+
+- `POST /api/images/upload-url` - create a signed upload URL for an avatar or message image
+- `PATCH /api/images/avatar` - confirm the uploaded avatar and update the current user's profile image URL
 
 ## Socket Events
 
@@ -158,28 +192,34 @@ Socket.IO uses the same backend URL and requires the `access_token` cookie durin
 
 Client-to-server:
 - `chat:join` with `{ chatId }` - joins a chat room after participant validation
-- `message:send` with `{ chatId, text }` - sends a message and emits it to other room participants
+- `chat:read` with `{ chatId, lastReadMessageId }` - updates the current user's last-read message for a chat
+- `message:send` with `{ chatId, text?, imageKey? }` - sends a text and/or image message and emits it to other room participants
+- `typing:start` with `{ chatId }` - notifies other room participants that the current user is typing
+- `typing:stop` with `{ chatId }` - notifies other room participants that the current user stopped typing
 
 Server-to-client:
 - `chat:new` with `{ chatId }` - notifies participants about a new chat
 - `message:new` with `{ chatId, message }` - emits a new message to chat participants
+- `presence:snapshot` with `{ onlineUserIds }` - sends the connected user's currently online chat participants
+- `presence:update` with `{ userId, isOnline }` - notifies room participants when a user goes online or offline
+- `typing:update` with `{ chatId, userId, isTyping }` - notifies room participants about typing state changes
 - `chat:error` / `message:error` - emitted when an acknowledgement callback is missing
 
 ## Project Structure
 
-- `src/config` - server, passport, prisma, cookies, env utilities
-- `src/controllers` - request handlers for auth, friends, and chats
+- `src/config` - server, passport, prisma, cookies, env, and R2 utilities
+- `src/controllers` - request handlers for auth, friends, chats, users, and images
 - `src/routes` - Express routers that wire endpoints to controllers
-- `src/services` - business logic and DB calls (Prisma)
+- `src/services` - business logic, DB calls, and image upload helpers
 - `src/middleware` - auth, logging, helpers
-- `src/socket` - Socket.IO setup, auth middleware, connection handlers, chat/message events
+- `src/socket` - Socket.IO setup, auth middleware, connection handlers, chat/message/presence/typing events
 - `src/dtos` - API response shaping helpers
 - `src/types` - shared backend TypeScript types
 - `prisma/` - schema + migrations
 
 ## Roadmap / Future Work
 
-- Presence/typing indicators, read receipts, message delivery status
+- Message delivery status
 - More providers (GitHub OAuth) and account linking
 - Rate limiting, CSRF hardening for cookie-based auth, audit logging
 - Redis for session-related caching / pub-sub (horizontal scaling)

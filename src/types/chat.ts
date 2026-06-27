@@ -10,7 +10,9 @@ export type ChatParticipantUser = {
 
 export type ChatLastMessage = {
     id: string;
-    text: string;
+    text: string | null;
+    imageKey: string | null;
+    imageContentType: string | null;
     createdAt: Date;
     senderId: string;
 };
