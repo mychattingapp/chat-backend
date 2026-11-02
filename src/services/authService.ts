@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { AppError } from '../errors/AppError.js';
 import { prisma } from '../config/prismaClient.js';
 import { requireEnv } from '../config/env.js';
 import type { Prisma, User } from '@prisma/client';
@@ -133,7 +134,7 @@ export async function refreshSession(refreshToken: string) {
         decoded = tokenPayload as { id: string };
     }
     catch (error) {
-        throw new Error('Invalid refresh token');
+        throw new AppError('Invalid refresh token', 'INVALID_REFRESH_TOKEN', 401);
     }
 
     const authRecord = await prisma.auth.findFirst({
@@ -143,12 +144,12 @@ export async function refreshSession(refreshToken: string) {
     });
 
     if (!authRecord) {
-        throw new Error('Session not found');
+        throw new AppError('Session not found', 'SESSION_NOT_FOUND', 401);
     }
 
     if (authRecord.tokenExpiry && authRecord.tokenExpiry < new Date()) {
         await clearRefreshTokenByValue(refreshToken);
-        throw new Error('Refresh token expired');
+        throw new AppError('Refresh token expired', 'REFRESH_TOKEN_EXPIRED', 401);
     }
 
     const userId = decoded.id;

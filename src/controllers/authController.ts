@@ -5,6 +5,7 @@ import { findUser } from '../services/userService.js';
 import { setAuthCookies } from '../utils/setAuthCookies.js';
 import { requireEnv } from '../config/env.js';
 import { accessCookieOptions, refreshCookieOptions } from '../config/cookies.js';
+import { AppError } from '../errors/AppError.js';
 
 export async function authCallback(req: Request, res: Response) {
 
@@ -54,6 +55,9 @@ export async function refreshAccessToken(req: Request, res: Response) {
         });
     }
     catch (error) {
+        if (!(error instanceof AppError) || error.statusCode !== 401) {
+            throw error;
+        }
         res.clearCookie('access_token', accessCookieOptions);
         res.clearCookie('refresh_token', refreshCookieOptions);
         return res.status(401).json({

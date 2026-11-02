@@ -13,5 +13,7 @@ export async function handleConnection(socket: Socket) {
     registerPresenceHandlers(socket);
     
     const chatIds = await joinUserChatRooms(socket);
+    if (!socket.connected) return;
+    socket.emit("session:ready");
     await handlePresenceConnected(socket, chatIds);
 }
