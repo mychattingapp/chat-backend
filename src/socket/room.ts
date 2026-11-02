@@ -6,9 +6,9 @@ export async function joinUserChatRooms(socket: Socket) {
 
     const userChatIds = await getUsersChatIds(userId);
 
-    userChatIds.forEach(chatId => {
-        socket.join(`chat:${chatId}`);
-    });
+    if (socket.connected) {
+        await socket.join(userChatIds.map(chatId => `chat:${chatId}`));
+    }
 
     return userChatIds;
 }

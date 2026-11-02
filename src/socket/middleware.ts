@@ -7,7 +7,7 @@ export function authenticateSocket(socket: Socket, next: (err?: Error) => void) 
         const cookies = parse(socket.handshake.headers.cookie || '')
         const token = cookies['access_token'];
         if (!token) {
-            return next(new Error("No token provided"));
+            return next(Object.assign(new Error("No token provided"), { data: { code: "AUTH_REQUIRED" } }));
         }
 
         const userId = verifyAccessToken(token);
@@ -15,6 +15,6 @@ export function authenticateSocket(socket: Socket, next: (err?: Error) => void) 
         return next();
     }
     catch (err) {
-        return next(new Error("Authentication error"));
+        return next(Object.assign(new Error("Authentication error"), { data: { code: "AUTH_REQUIRED" } }));
     }
 }
