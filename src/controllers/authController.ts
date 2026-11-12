@@ -85,6 +85,7 @@ export async function fetchUserData(req: AuthenticatedRequest, res: Response) {
     }
 
     const userData = {
+        role: userObject.role,
         id: userObject.id,
         name: userObject.username,
         email: userObject.email,

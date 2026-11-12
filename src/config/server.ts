@@ -15,6 +15,7 @@ import { errorHandler } from '../utils/errorHandler.js';
 import { chatRouter } from '../routes/chatRouter.js';
 import { userRouter } from '../routes/userRouter.js';
 import { imageRouter } from '../routes/imageRouter.js';
+import { adminRouter } from '../routes/adminRouter.js';
 
 export const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/friends', friendRouter);
 app.use('/api/chats', chatRouter);
 app.use('/api/users', userRouter);
 app.use('/api/images', imageRouter);
+app.use('/api/admin', adminRouter);
 
 app.use(logger);
 
