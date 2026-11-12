@@ -18,6 +18,7 @@ datasource db {
 }
 
 model User {
+  role            UserRole @default(USER)
   id              String  @id @default(uuid())
   username        String
   email           String  @unique
@@ -36,6 +37,11 @@ model User {
   friendshipsAsUser2 Friendship[] @relation("friend2User")
 
   chatParticipants ChatParticipant[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 model Auth {
@@ -75,6 +81,8 @@ model Message {
   readByParticipants ChatParticipant[] @relation("lastReadMessage")
 
   @@index([chatId, createdAt, id])
+  @@index([createdAt])
+  @@index([senderId, createdAt])
 }
 
 enum ChatType {

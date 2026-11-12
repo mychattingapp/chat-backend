@@ -5,6 +5,7 @@ import { AppError } from "../errors/AppError.js";
 
 function parseUserData(userObject: NonNullable<Awaited<ReturnType<typeof findUser>>>) {
     return {
+        role: userObject.role,
         id: userObject.id,
         name: userObject.username,
         email: userObject.email,
